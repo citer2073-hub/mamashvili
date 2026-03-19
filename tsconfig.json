@@ -1,37 +1,21 @@
 {
   "compilerOptions": {
-<<<<<<< HEAD
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "allowJs": false,
-=======
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
-<<<<<<< HEAD
     "module": "ESNext",
     "moduleResolution": "Node",
-=======
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx"
   },
-<<<<<<< HEAD
   "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
-=======
-  "include": ["src"]
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
+  "references": []
 }

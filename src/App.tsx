@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import {
   useState,
   useEffect,
@@ -6,9 +5,6 @@ import {
   useRef,
   type CSSProperties,
 } from "react";
-=======
-import { useState, useEffect, useCallback, useRef } from "react";
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, onValue, push, set, get } from "firebase/database";
 import {
@@ -31,7 +27,6 @@ import {
   updatePassword,
 } from "firebase/auth";
 
-<<<<<<< HEAD
 type Dish = {
   id: string;
   available?: boolean;
@@ -66,8 +61,6 @@ type OrderItem = {
   [key: string]: any;
 };
 
-=======
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
 // ─── Firebase Init ─────────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCwmWwRCOB8V-u9hgt-pk61pJHFS8BKPJk",
@@ -328,7 +321,6 @@ const MENU_SEED = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class BasePaymentStrategy {
-<<<<<<< HEAD
   options: Record<string, any>;
 
     getQrUrl(_amount: number) {
@@ -336,15 +328,11 @@ class BasePaymentStrategy {
   }   
 
   constructor(options: Record<string, any> = {}) {
-=======
-  constructor(options = {}) {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
     if (new.target === BasePaymentStrategy) {
       throw new Error("BasePaymentStrategy — абстрактный класс");
     }
     this.options = options;
   }
-<<<<<<< HEAD
 
   getLabel(): string {
     throw new Error("getLabel() не реализован");
@@ -359,18 +347,6 @@ class BasePaymentStrategy {
   }
 
   async pay(_context: any) {
-=======
-  getLabel() {
-    throw new Error("getLabel() не реализован");
-  }
-  getDescription() {
-    return "";
-  }
-  canProceedDirectly() {
-    return true;
-  }
-  async pay(context) {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
     throw new Error("pay() не реализован");
   }
 }
@@ -460,7 +436,6 @@ class StripePaymentStrategy extends BasePaymentStrategy {
 
 // ─── Реестр ───────────────────────────────────────────────────────────────────
 class PaymentRegistry {
-<<<<<<< HEAD
   _registry: Map<string, BasePaymentStrategy>;
 
   constructor() {
@@ -473,26 +448,12 @@ class PaymentRegistry {
   }
 
   get(key: string) {
-=======
-  constructor() {
-    this._registry = new Map();
-  }
-  register(key, strategy) {
-    this._registry.set(key, strategy);
-    return this;
-  }
-  get(key) {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
     const s = this._registry.get(key);
     if (!s) throw new Error(`Стратегия "${key}" не найдена`);
     return s;
   }
-<<<<<<< HEAD
 
   getOptions(): Array<{ key: string; label: string; description: string }> {
-=======
-  getOptions() {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
     return Array.from(this._registry.entries()).map(([key, s]) => ({
       key,
       label: s.getLabel(),
@@ -508,7 +469,6 @@ const paymentRegistry = new PaymentRegistry()
   .register("stripe", new StripePaymentStrategy());
 
 class PaymentService {
-<<<<<<< HEAD
   registry: PaymentRegistry;
 
   constructor(registry: PaymentRegistry) {
@@ -520,15 +480,6 @@ class PaymentService {
     await strategy.pay(context);
   }
 
-=======
-  constructor(registry) {
-    this.registry = registry;
-  }
-  async process(paymentKey, context) {
-    const strategy = this.registry.get(paymentKey);
-    await strategy.pay(context);
-  }
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
   getOptions() {
     return this.registry.getOptions();
   }
@@ -986,7 +937,6 @@ function phoneToEmail(phone) {
 }
 
 // ─── Сохраняем профиль пользователя в Firebase Realtime DB ────────────────────
-<<<<<<< HEAD
 async function saveUserProfile(
   user: any,
   extraData: {
@@ -995,9 +945,6 @@ async function saveUserProfile(
     provider?: string;
   } = {}
 ) {
-=======
-async function saveUserProfile(user, extraData = {}) {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
   try {
     const userRef = ref(db, `users/${user.uid}`);
     const snap = await get(userRef);
@@ -1026,22 +973,14 @@ async function saveUserProfile(user, extraData = {}) {
 }
 
 // ─── Ищем пользователя по номеру телефона в БД ────────────────────────────────
-<<<<<<< HEAD
 async function findUserByPhone(phone: string) {
-=======
-async function findUserByPhone(phone) {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
   const digits = phone.replace(/\D/g, "");
   const usersRef = ref(db, "users");
   const snap = await get(usersRef);
   if (!snap.exists()) return null;
-<<<<<<< HEAD
 
   const users = snap.val() as Record<string, { phone?: string; [key: string]: any }>;
 
-=======
-  const users = snap.val();
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
   return (
     Object.values(users).find(
       (u) => u.phone && u.phone.replace(/\D/g, "") === digits
@@ -1051,11 +990,7 @@ async function findUserByPhone(phone) {
 
 // ─── Auth Modal ───────────────────────────────────────────────────────────────
 // ─── Shared Auth Styles ───────────────────────────────────────────────────────
-<<<<<<< HEAD
 const authInputStyle: CSSProperties = {
-=======
-const authInputStyle = {
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
   background: "#fafafa",
   border: "1px solid #e8ddd0",
   color: "#1a0a00",
@@ -1142,7 +1077,6 @@ function PasswordInput({
   show,
   onToggle,
   onEnter,
-<<<<<<< HEAD
 }: {
   value: string;
   onChange: (e: any) => void;
@@ -1150,8 +1084,6 @@ function PasswordInput({
   show: boolean;
   onToggle: () => void;
   onEnter?: () => void | Promise<void>;
-=======
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
 }) {
   return (
     <div style={{ position: "relative" }}>
@@ -1913,10 +1845,6 @@ function HomePage({ onMenu, onLogin, user }) {
               <button
                 onClick={onLogin}
                 style={{
-<<<<<<< HEAD
-=======
-                  background: "none",
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
                   color: "#fff",
                   border: "2px solid rgba(255,255,255,.6)",
                   padding: "13px 36px",
@@ -2074,15 +2002,9 @@ function MenuPage({ user, onAddToCart, toast, onLogin }) {
       );
   }, [loading, data]);
 
-<<<<<<< HEAD
   const items: Dish[] = data
     ? Object.entries(data as Record<string, any>)
         .map(([id, v]) => ({ id, ...(v as Record<string, any>) } as Dish))
-=======
-  const items = data
-    ? Object.entries(data)
-        .map(([id, v]) => ({ id, ...v }))
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
         .filter((d) => d.available !== false)
     : [];
   const filtered =
@@ -2200,13 +2122,9 @@ function MenuPage({ user, onAddToCart, toast, onLogin }) {
                         position: "absolute",
                         inset: 0,
                       }}
-<<<<<<< HEAD
                       onError={(e) => {
   e.currentTarget.style.display = "none";
 }}
-=======
-                      onError={(e) => (e.target.style.display = "none")}
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
                     />
                   ) : null}
                   {!dish.imageUrl && (
@@ -2771,13 +2689,9 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
                       height: "100%",
                       objectFit: "cover",
                     }}
-<<<<<<< HEAD
                     onError={(e) => {
   e.currentTarget.style.display = "none";
 }}
-=======
-                    onError={(e) => (e.target.style.display = "none")}
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
                   />
                 ) : (
                   item.emoji
@@ -3172,15 +3086,9 @@ function OrdersPage({ user }) {
   );
   const [open, setOpen] = useState(null);
 
-<<<<<<< HEAD
   const orders: OrderItem[] = data
     ? Object.entries(data as Record<string, any>)
         .map(([id, o]) => ({ orderId: id, ...(o as Record<string, any>) } as OrderItem))
-=======
-  const orders = data
-    ? Object.entries(data)
-        .map(([id, o]) => ({ orderId: id, ...o }))
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
     : [];
 
@@ -3349,11 +3257,7 @@ function OrdersPage({ user }) {
                       </>
                     )}
                   </div>
-<<<<<<< HEAD
                   {(o.items?.dishes || []).map((d: any, i: number) => (
-=======
-                  {(o.items?.dishes || []).map((d, i) => (
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
                     <div
                       key={i}
                       style={{

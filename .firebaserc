@@ -1,13 +1,5 @@
 {
   "projects": {
-<<<<<<< HEAD
-    "git init": "mamashvili-4d361"
-  },
-  "targets": {},
-  "etags": {}
-}
-=======
     "default": "mamashvili-4d361"
   }
 }
->>>>>>> 592f8672dc51bce57d2bd1879c83eeea324ca65d
