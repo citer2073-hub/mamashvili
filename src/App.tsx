@@ -1,10 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  type CSSProperties,
-} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, onValue, push, set, get } from "firebase/database";
 import {
@@ -25,41 +19,8 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
-
-type Dish = {
-  id: string;
-  available?: boolean;
-  category?: string;
-  discount?: number;
-  imageUrl?: string;
-  name?: string;
-  emoji?: string;
-  popular?: boolean;
-  spicy?: boolean;
-  veg?: boolean;
-  weight?: string;
-  nameGe?: string;
-  description?: string;
-  price?: number;
-  [key: string]: any;
-};
-
-type OrderItem = {
-  orderId: string;
-  createdAt?: number;
-  status?: string;
-  total?: number;
-  address?: string;
-  payments?: string;
-  comment?: string;
-  paymentStatus?: string;
-  items?: {
-    dishes?: any[];
-    [key: string]: any;
-  };
-  [key: string]: any;
-};
 
 // ─── Firebase Init ─────────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -129,7 +90,6 @@ const CATEGORIES = [
 const MENU_SEED = [
   {
     name: "Хинкали с мясом",
-    nameGe: "ხინკალი",
     category: "Хинкали",
     price: 490,
     emoji: "🥟",
@@ -140,7 +100,6 @@ const MENU_SEED = [
   },
   {
     name: "Хинкали грибные",
-    nameGe: "სოკოს ხინკალი",
     category: "Хинкали",
     price: 450,
     emoji: "🥟",
@@ -151,7 +110,6 @@ const MENU_SEED = [
   },
   {
     name: "Хинкали с сыром",
-    nameGe: "ყველის ხინკალი",
     category: "Хинкали",
     price: 450,
     emoji: "🥟",
@@ -162,7 +120,6 @@ const MENU_SEED = [
   },
   {
     name: "Хачапури по-аджарски",
-    nameGe: "აჭარული",
     category: "Хачапури",
     price: 2700,
     emoji: "🫓",
@@ -173,7 +130,6 @@ const MENU_SEED = [
   },
   {
     name: "Хачапури имеретинский",
-    nameGe: "იმერული",
     category: "Хачапури",
     price: 2200,
     emoji: "🫓",
@@ -184,7 +140,6 @@ const MENU_SEED = [
   },
   {
     name: "Хачапури мегрельский",
-    nameGe: "მეგრული",
     category: "Хачапури",
     price: 2500,
     emoji: "🫓",
@@ -195,7 +150,6 @@ const MENU_SEED = [
   },
   {
     name: "Мцвади",
-    nameGe: "მწვადი",
     category: "Мясо",
     price: 4300,
     emoji: "🍢",
@@ -206,7 +160,6 @@ const MENU_SEED = [
   },
   {
     name: "Чакапули",
-    nameGe: "ჩაქაფული",
     category: "Мясо",
     price: 3800,
     emoji: "🍲",
@@ -216,7 +169,6 @@ const MENU_SEED = [
   },
   {
     name: "Сациви",
-    nameGe: "საცივი",
     category: "Мясо",
     price: 3200,
     emoji: "🍗",
@@ -227,7 +179,6 @@ const MENU_SEED = [
   },
   {
     name: "Пхали ассорти",
-    nameGe: "ფხალი",
     category: "Закуски",
     price: 2100,
     emoji: "🥗",
@@ -239,7 +190,6 @@ const MENU_SEED = [
   },
   {
     name: "Аджапсандали",
-    nameGe: "აჯაფსანდალი",
     category: "Закуски",
     price: 1900,
     emoji: "🫛",
@@ -251,7 +201,6 @@ const MENU_SEED = [
   },
   {
     name: "Бадриджани",
-    nameGe: "ბადრიჯანი",
     category: "Закуски",
     price: 2000,
     emoji: "🍆",
@@ -262,7 +211,6 @@ const MENU_SEED = [
   },
   {
     name: "Харчо",
-    nameGe: "ხარჩო",
     category: "Супы",
     price: 2300,
     emoji: "🍜",
@@ -274,7 +222,6 @@ const MENU_SEED = [
   },
   {
     name: "Чихиртма",
-    nameGe: "ჩიხირთმა",
     category: "Супы",
     price: 2200,
     emoji: "🍲",
@@ -284,7 +231,6 @@ const MENU_SEED = [
   },
   {
     name: "Вино Саперави",
-    nameGe: "საფერავი",
     category: "Напитки",
     price: 3200,
     emoji: "🍷",
@@ -294,7 +240,6 @@ const MENU_SEED = [
   },
   {
     name: "Лимонад домашний",
-    nameGe: "ლიმონათი",
     category: "Напитки",
     price: 1200,
     emoji: "🥤",
@@ -305,7 +250,6 @@ const MENU_SEED = [
   },
   {
     name: "Боржоми",
-    nameGe: "ბორჯომი",
     category: "Напитки",
     price: 990,
     emoji: "💧",
@@ -321,32 +265,22 @@ const MENU_SEED = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class BasePaymentStrategy {
-  options: Record<string, any>;
-
-    getQrUrl(_amount: number) {
-      return "";
-  }   
-
-  constructor(options: Record<string, any> = {}) {
+  constructor(options = {}) {
     if (new.target === BasePaymentStrategy) {
       throw new Error("BasePaymentStrategy — абстрактный класс");
     }
     this.options = options;
   }
-
-  getLabel(): string {
+  getLabel() {
     throw new Error("getLabel() не реализован");
   }
-
-  getDescription(): string {
+  getDescription() {
     return "";
   }
-
-  canProceedDirectly(): boolean {
+  canProceedDirectly() {
     return true;
   }
-
-  async pay(_context: any) {
+  async pay(context) {
     throw new Error("pay() не реализован");
   }
 }
@@ -436,24 +370,19 @@ class StripePaymentStrategy extends BasePaymentStrategy {
 
 // ─── Реестр ───────────────────────────────────────────────────────────────────
 class PaymentRegistry {
-  _registry: Map<string, BasePaymentStrategy>;
-
   constructor() {
     this._registry = new Map();
   }
-
-  register(key: string, strategy: BasePaymentStrategy) {
+  register(key, strategy) {
     this._registry.set(key, strategy);
     return this;
   }
-
-  get(key: string) {
+  get(key) {
     const s = this._registry.get(key);
     if (!s) throw new Error(`Стратегия "${key}" не найдена`);
     return s;
   }
-
-  getOptions(): Array<{ key: string; label: string; description: string }> {
+  getOptions() {
     return Array.from(this._registry.entries()).map(([key, s]) => ({
       key,
       label: s.getLabel(),
@@ -469,17 +398,13 @@ const paymentRegistry = new PaymentRegistry()
   .register("stripe", new StripePaymentStrategy());
 
 class PaymentService {
-  registry: PaymentRegistry;
-
-  constructor(registry: PaymentRegistry) {
+  constructor(registry) {
     this.registry = registry;
   }
-
-  async process(paymentKey: string, context: any) {
+  async process(paymentKey, context) {
     const strategy = this.registry.get(paymentKey);
     await strategy.pay(context);
   }
-
   getOptions() {
     return this.registry.getOptions();
   }
@@ -937,14 +862,7 @@ function phoneToEmail(phone) {
 }
 
 // ─── Сохраняем профиль пользователя в Firebase Realtime DB ────────────────────
-async function saveUserProfile(
-  user: any,
-  extraData: {
-    phone?: string;
-    displayName?: string;
-    provider?: string;
-  } = {}
-) {
+async function saveUserProfile(user, extraData = {}) {
   try {
     const userRef = ref(db, `users/${user.uid}`);
     const snap = await get(userRef);
@@ -973,14 +891,12 @@ async function saveUserProfile(
 }
 
 // ─── Ищем пользователя по номеру телефона в БД ────────────────────────────────
-async function findUserByPhone(phone: string) {
+async function findUserByPhone(phone) {
   const digits = phone.replace(/\D/g, "");
   const usersRef = ref(db, "users");
   const snap = await get(usersRef);
   if (!snap.exists()) return null;
-
-  const users = snap.val() as Record<string, { phone?: string; [key: string]: any }>;
-
+  const users = snap.val();
   return (
     Object.values(users).find(
       (u) => u.phone && u.phone.replace(/\D/g, "") === digits
@@ -990,7 +906,7 @@ async function findUserByPhone(phone: string) {
 
 // ─── Auth Modal ───────────────────────────────────────────────────────────────
 // ─── Shared Auth Styles ───────────────────────────────────────────────────────
-const authInputStyle: CSSProperties = {
+const authInputStyle = {
   background: "#fafafa",
   border: "1px solid #e8ddd0",
   color: "#1a0a00",
@@ -1077,13 +993,6 @@ function PasswordInput({
   show,
   onToggle,
   onEnter,
-}: {
-  value: string;
-  onChange: (e: any) => void;
-  placeholder?: string;
-  show: boolean;
-  onToggle: () => void;
-  onEnter?: () => void | Promise<void>;
 }) {
   return (
     <div style={{ position: "relative" }}>
@@ -1242,57 +1151,33 @@ function AuthModal({ onClose, toast }) {
     }
   };
 
-  // ── Смена пароля: старый пароль → новый пароль (без SMS!) ─────────────────
+  // ── Восстановление пароля: отправляем email на fake-email по номеру ──────────
   const handleChangePassword = async () => {
     if (phone.replace(/\D/g, "").length < 11) {
       setError("Введи номер в формате +7XXXXXXXXXX");
-      return;
-    }
-    if (!oldPass) {
-      setError("Введи текущий пароль");
-      return;
-    }
-    if (newPass.length < 6) {
-      setError("Новый пароль минимум 6 символов");
-      return;
-    }
-    if (newPass !== newPass2) {
-      setError("Новые пароли не совпадают");
-      return;
-    }
-    if (oldPass === newPass) {
-      setError("Новый пароль совпадает со старым");
       return;
     }
     setLoading(true);
     setError("");
     try {
       const email = phoneToEmail(phone);
-      // 1. Входим со старым паролем чтобы получить credential
-      const credential = EmailAuthProvider.credential(email, oldPass);
-      // 2. Re-authenticate
-      await reauthenticateWithCredential(
-        auth.currentUser ||
-          (
-            await signInWithEmailAndPassword(auth, email, oldPass)
-          ).user,
-        credential
-      );
-      // 3. Меняем пароль
-      await updatePassword(auth.currentUser, newPass);
-      await saveUserProfile(auth.currentUser, { phone, provider: "phone" });
-      toast("Пароль успешно изменён! 🇬🇪");
+      // Проверяем, есть ли аккаунт с таким номером
+      const existing = await findUserByPhone(phone);
+      if (!existing) {
+        setError("Аккаунт с таким номером не найден");
+        setLoading(false);
+        return;
+      }
+      // Отправляем письмо для сброса пароля
+      await sendPasswordResetEmail(auth, email);
+      toast("Инструкция по смене пароля отправлена 📧");
       onClose();
     } catch (e) {
       const msg =
-        e.code === "auth/invalid-credential" || e.code === "auth/wrong-password"
-          ? "Неверный текущий пароль"
-          : e.code === "auth/user-not-found"
+        e.code === "auth/user-not-found"
           ? "Аккаунт с таким номером не найден"
           : e.code === "auth/too-many-requests"
           ? "Слишком много попыток. Попробуй позже."
-          : e.code === "auth/requires-recent-login"
-          ? "Сначала войди в аккаунт заново"
           : e.message;
       setError(msg);
     } finally {
@@ -1547,7 +1432,7 @@ function AuthModal({ onClose, toast }) {
                 lineHeight: 1.6,
               }}
             >
-              Введи номер телефона, текущий пароль и новый пароль.
+              Введи номер телефона — мы отправим инструкцию по сбросу пароля.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               <label style={authLabelStyle}>Номер телефона</label>
@@ -1556,43 +1441,12 @@ function AuthModal({ onClose, toast }) {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+77001234567"
                 style={authInputStyle}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              <label style={authLabelStyle}>Текущий пароль</label>
-              <PasswordInput
-                value={oldPass}
-                onChange={(e) => setOldPass(e.target.value)}
-                placeholder="Текущий пароль"
-                show={showOldPass}
-                onToggle={() => setShowOldPass(!showOldPass)}
-                onEnter={handleChangePassword}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              <label style={authLabelStyle}>Новый пароль</label>
-              <PasswordInput
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                placeholder="Минимум 6 символов"
-                show={showNewPass}
-                onToggle={() => setShowNewPass(!showNewPass)}
-                onEnter={handleChangePassword}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              <label style={authLabelStyle}>Повторить новый пароль</label>
-              <PasswordInput
-                value={newPass2}
-                onChange={(e) => setNewPass2(e.target.value)}
-                show={showNewPass2}
-                onToggle={() => setShowNewPass2(!showNewPass2)}
-                onEnter={handleChangePassword}
+                onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
               />
             </div>
             {<AuthErrorBox error={error} />}
             <AuthPrimaryBtn
-              label={loading ? "Сохраняем..." : "Изменить пароль"}
+              label={loading ? "Отправляем..." : "Сбросить пароль"}
               onClick={handleChangePassword}
               disabled={loading}
             />
@@ -1845,6 +1699,7 @@ function HomePage({ onMenu, onLogin, user }) {
               <button
                 onClick={onLogin}
                 style={{
+                  background: "none",
                   color: "#fff",
                   border: "2px solid rgba(255,255,255,.6)",
                   padding: "13px 36px",
@@ -2002,9 +1857,9 @@ function MenuPage({ user, onAddToCart, toast, onLogin }) {
       );
   }, [loading, data]);
 
-  const items: Dish[] = data
-    ? Object.entries(data as Record<string, any>)
-        .map(([id, v]) => ({ id, ...(v as Record<string, any>) } as Dish))
+  const items = data
+    ? Object.entries(data)
+        .map(([id, v]) => ({ id, ...v }))
         .filter((d) => d.available !== false)
     : [];
   const filtered =
@@ -2122,9 +1977,7 @@ function MenuPage({ user, onAddToCart, toast, onLogin }) {
                         position: "absolute",
                         inset: 0,
                       }}
-                      onError={(e) => {
-  e.currentTarget.style.display = "none";
-}}
+                      onError={(e) => (e.target.style.display = "none")}
                     />
                   ) : null}
                   {!dish.imageUrl && (
@@ -2256,19 +2109,7 @@ function MenuPage({ user, onAddToCart, toast, onLogin }) {
                       </div>
                     )}
                   </div>
-                  {dish.nameGe && (
-                    <div
-                      style={{
-                        fontFamily: "Georgia,serif",
-                        fontSize: 12,
-                        fontStyle: "italic",
-                        color: "#cc0000",
-                        marginBottom: 8,
-                      }}
-                    >
-                      {dish.nameGe}
-                    </div>
-                  )}
+
                   <div
                     style={{
                       fontSize: 12,
@@ -2368,15 +2209,175 @@ function MenuPage({ user, onAddToCart, toast, onLogin }) {
   );
 }
 
+// ─── Phone validation ─────────────────────────────────────────────────────────
+function formatPhone(raw) {
+  // Оставляем только цифры
+  const digits = raw.replace(/\D/g, "");
+  // Убираем лидирующие 7 или 8 если уже есть
+  const core = digits.startsWith("7")
+    ? digits.slice(1)
+    : digits.startsWith("8")
+    ? digits.slice(1)
+    : digits;
+  const d = core.slice(0, 10);
+  let result = "+7";
+  if (d.length > 0) result += " " + d.slice(0, 3);
+  if (d.length > 3) result += " " + d.slice(3, 6);
+  if (d.length > 6) result += "-" + d.slice(6, 8);
+  if (d.length > 8) result += "-" + d.slice(8, 10);
+  return result;
+}
+
+function isValidPhone(phone) {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"));
+}
+
+// ─── Address Block ─────────────────────────────────────────────────────────────
+function AddressBlock({ addr, onAddrChange }) {
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState("");
+  const [geoFound, setGeoFound] = useState(false);
+
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) {
+      setError("Геолокация не поддерживается этим браузером");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setGeoFound(false);
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: { latitude: lat, longitude: lon } }) => {
+        setLoading(false);
+        setGeoFound(true);
+        // Записываем координаты — пользователь заменит на нормальный адрес
+        onAddrChange({
+          ...addr,
+          street: addr.street || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+        });
+      },
+      (err) => {
+        setLoading(false);
+        if (err.code === 1)
+          setError("Разрешите геолокацию в браузере и попробуйте снова");
+        else
+          setError("Не удалось определить местоположение — введите адрес вручную");
+      },
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+    );
+  };
+
+  const inp = { ...authInputStyle };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
+      {/* Большая кнопка геолокации */}
+      <button
+        type="button"
+        onClick={handleGeolocate}
+        disabled={loading}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 10, width: "100%",
+          background: geoFound ? "#22aa44" : loading ? "#a04040" : "#cc0000",
+          color: "#fff", border: "none",
+          padding: "14px 16px", borderRadius: 6,
+          cursor: loading ? "not-allowed" : "pointer",
+          fontSize: 13, fontWeight: 700, letterSpacing: 0.5,
+          fontFamily: "inherit",
+          transition: "background .2s",
+          boxShadow: loading ? "none" : "0 2px 8px rgba(0,0,0,.15)",
+        }}
+      >
+        {loading ? (
+          <>
+            <div style={{
+              width: 16, height: 16, flexShrink: 0,
+              border: "2px solid rgba(255,255,255,.3)",
+              borderTopColor: "#fff", borderRadius: "50%",
+              animation: "spin .8s linear infinite",
+            }} />
+            Определяем местоположение…
+          </>
+        ) : geoFound ? (
+          <><span style={{ fontSize: 18 }}>✓</span> Местоположение определено — проверьте адрес</>
+        ) : (
+          <><span style={{ fontSize: 18 }}>📍</span> Определить моё местоположение</>
+        )}
+      </button>
+
+      {error && (
+        <div style={{
+          fontSize: 12, color: "#cc0000", lineHeight: 1.5,
+          background: "#fff0f0", border: "1px solid #ffcccc",
+          borderRadius: 4, padding: "8px 12px",
+        }}>
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* Поле адреса — всегда видно, можно вводить вручную */}
+      <input
+        value={addr.street}
+        onChange={(e) => onAddrChange({ ...addr, street: e.target.value })}
+        placeholder="Улица и дом"
+        style={inp}
+      />
+
+      {/* Поля подъезд/квартира/этаж — появляются когда есть адрес */}
+      {addr.street.length > 0 && (
+        <div style={{
+          display: "flex", flexDirection: "column", gap: 8,
+          background: "#fdf5f0", border: "1px solid #e8c8b8",
+          borderRadius: 6, padding: "12px",
+        }}>
+          <div style={{
+            fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase",
+            color: "#cc0000", fontWeight: 700, marginBottom: 2,
+          }}>
+            Уточните адрес
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[
+              ["entrance", "Подъезд", "1"],
+              ["flat",     "Квартира", "42"],
+              ["floor",    "Этаж",     "5"],
+            ].map(([key, label, ph]) => (
+              <div key={key} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                <label style={{
+                  fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
+                  color: "#8a6a50", fontWeight: 700,
+                }}>
+                  {label}
+                </label>
+                <input
+                  value={addr[key]}
+                  onChange={(e) => onAddrChange({ ...addr, [key]: e.target.value })}
+                  placeholder={ph}
+                  style={{ ...inp, textAlign: "center", padding: "10px 6px" }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── CartPage ─────────────────────────────────────────────────────────────────
 function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
   const [form, setForm] = useState({
     name: user?.displayName || "",
-    phone: user?.phoneNumber || "",
-    address: "",
+    phone: user?.phoneNumber ? formatPhone(user.phoneNumber) : "+7",
+    address: { street: "", entrance: "", flat: "", floor: "" },
     comment: "",
     payment: "cash",
   });
+  const [phoneError, setPhoneError] = useState("");
   const [showKaspi, setShowKaspi] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   // Для Stripe: показывать модалку редиректа
@@ -2389,7 +2390,7 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
     setForm((f) => ({
       ...f,
       name: user?.displayName || f.name,
-      phone: user?.phoneNumber || f.phone,
+      phone: user?.phoneNumber ? formatPhone(user.phoneNumber) : f.phone || "+7",
     }));
   }, [user]);
 
@@ -2447,11 +2448,18 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
     if (!user) return null;
     setSubmitting(true);
     try {
+      const addrStr = [
+        form.address.street,
+        form.address.entrance && `подъ. ${form.address.entrance}`,
+        form.address.flat && `кв. ${form.address.flat}`,
+        form.address.floor && `эт. ${form.address.floor}`,
+      ].filter(Boolean).join(", ");
+
       await set(ref(db, `users/${user.uid}`), {
         name: form.name,
         phone: form.phone,
         email: user.email || "",
-        address: form.address,
+        address: addrStr,
         createdAt: Date.now(),
         authProvider: user.providerData[0]?.providerId || "unknown",
       });
@@ -2460,7 +2468,8 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
         uid: user.uid,
         userName: form.name,
         phone: form.phone,
-        address: form.address,
+        address: addrStr,
+        addressDetail: form.address,
         comment: form.comment,
         payments: form.payment,
         status: "new",
@@ -2529,10 +2538,15 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
       onLogin();
       return;
     }
-    if (!form.name || !form.address) {
+    if (!form.name || !form.address.street) {
       toast("Укажи имя и адрес доставки");
       return;
     }
+    if (!isValidPhone(form.phone)) {
+      setPhoneError("Введите корректный номер (+7 XXX XXX-XX-XX)");
+      return;
+    }
+    setPhoneError("");
 
     await paymentService.process(form.payment, {
       total,
@@ -2578,7 +2592,10 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
 
   if (cart.length === 0)
     return (
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "60px 40px" }}>
+      <div
+        className="cart-page-wrap"
+        style={{ maxWidth: 1400, margin: "0 auto", padding: "60px 40px" }}
+      >
         <div
           style={{
             fontFamily: "Georgia,serif",
@@ -2612,7 +2629,10 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
     );
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto", padding: "60px 40px" }}>
+    <div
+      className="cart-page-wrap"
+      style={{ maxWidth: 1400, margin: "0 auto", padding: "60px 40px" }}
+    >
       <div
         style={{
           display: "flex",
@@ -2626,6 +2646,7 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
         }}
       >
         <div
+          className="cart-title"
           style={{
             fontFamily: "Georgia,serif",
             fontSize: 52,
@@ -2648,10 +2669,11 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 400px",
+          gridTemplateColumns: "minmax(0, 1fr) clamp(300px, 400px, 100%)",
           gap: 40,
           alignItems: "start",
         }}
+        className="cart-grid"
       >
         <div>
           {cart.map((item, idx) => (
@@ -2660,11 +2682,12 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
               style={{
                 display: "grid",
                 gridTemplateColumns: "64px 1fr auto",
-                gap: 16,
+                gap: 12,
                 alignItems: "center",
                 borderBottom: "1px solid #e8ddd0",
                 padding: "18px 0",
               }}
+              className="cart-item-grid"
             >
               <div
                 style={{
@@ -2689,9 +2712,7 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
                       height: "100%",
                       objectFit: "cover",
                     }}
-                    onError={(e) => {
-  e.currentTarget.style.display = "none";
-}}
+                    onError={(e) => (e.target.style.display = "none")}
                   />
                 ) : (
                   item.emoji
@@ -2778,6 +2799,7 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
         </div>
 
         <div
+          className="checkout-panel"
           style={{
             background: "#fff",
             border: "1px solid #e8ddd0",
@@ -2846,30 +2868,68 @@ function CartPage({ cart, setCart, toast, onOrderDone, user, onLogin }) {
             Оформление
           </div>
 
-          {[
-            ["name", "Имя", "Ваше имя"],
-            ["phone", "Телефон", "+7 999 000-00-00"],
-            ["address", "Адрес доставки", "Улица, дом, квартира"],
-            ["comment", "Комментарий", "Без лука..."],
-          ].map(([k, l, p]) => (
-            <div
-              key={k}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                marginBottom: 14,
+          {/* Имя */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+            <label style={authLabelStyle}>Имя</label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Ваше имя"
+              style={authInputStyle}
+            />
+          </div>
+
+          {/* Телефон с форматированием и валидацией */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+            <label style={authLabelStyle}>Телефон</label>
+            <input
+              value={form.phone}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // Не даём удалить +7
+                if (raw.length < 2) return;
+                const formatted = formatPhone(raw);
+                setForm((p) => ({ ...p, phone: formatted }));
+                setPhoneError("");
               }}
-            >
-              <label style={authLabelStyle}>{l}</label>
-              <input
-                value={form[k]}
-                onChange={f(k)}
-                placeholder={p}
-                style={authInputStyle}
-              />
-            </div>
-          ))}
+              placeholder="+7 999 000-00-00"
+              style={{
+                ...authInputStyle,
+                borderColor: phoneError ? "#cc0000" : undefined,
+              }}
+              type="tel"
+            />
+            {phoneError && (
+              <div style={{ fontSize: 10, color: "#cc0000", letterSpacing: 0.5 }}>
+                {phoneError}
+              </div>
+            )}
+            {form.phone.length > 2 && isValidPhone(form.phone) && (
+              <div style={{ fontSize: 10, color: "#22aa44", letterSpacing: 0.5 }}>
+                ✓ Номер верный
+              </div>
+            )}
+          </div>
+
+          {/* Адрес с картой Яндекс + детальные поля */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+            <label style={authLabelStyle}>Адрес доставки</label>
+            <AddressBlock
+              addr={form.address}
+              onAddrChange={(newAddr) => setForm((p) => ({ ...p, address: newAddr }))}
+            />
+          </div>
+
+          {/* Комментарий */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+            <label style={authLabelStyle}>Комментарий</label>
+            <input
+              value={form.comment}
+              onChange={(e) => setForm((p) => ({ ...p, comment: e.target.value }))}
+              placeholder="Без лука..."
+              style={authInputStyle}
+            />
+          </div>
 
           {/* Способ оплаты */}
           <div
@@ -3086,9 +3146,9 @@ function OrdersPage({ user }) {
   );
   const [open, setOpen] = useState(null);
 
-  const orders: OrderItem[] = data
-    ? Object.entries(data as Record<string, any>)
-        .map(([id, o]) => ({ orderId: id, ...(o as Record<string, any>) } as OrderItem))
+  const orders = data
+    ? Object.entries(data)
+        .map(([id, o]) => ({ orderId: id, ...o }))
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
     : [];
 
@@ -3257,7 +3317,7 @@ function OrdersPage({ user }) {
                       </>
                     )}
                   </div>
-                  {(o.items?.dishes || []).map((d: any, i: number) => (
+                  {(o.items?.dishes || []).map((d, i) => (
                     <div
                       key={i}
                       style={{
@@ -3389,6 +3449,11 @@ export default function App() {
           .nav-logo-text { font-size: 18px !important; }
           .nav-subtitle { display: none !important; }
           .nav-bar { padding: 0 16px !important; height: 56px !important; }
+          .cart-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .cart-page-wrap { padding: 20px 16px 100px !important; }
+          .cart-title { font-size: 32px !important; }
+          .cart-item-grid { grid-template-columns: 52px 1fr auto !important; gap: 10px !important; }
+          .checkout-panel { position: static !important; }
         }
         @media (min-width: 641px) {
           .mobile-bottom-nav { display: none !important; }
